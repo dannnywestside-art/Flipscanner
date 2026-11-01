@@ -225,6 +225,11 @@ button{cursor:pointer}
 .li b{font-weight:600;font-size:13px;display:block}
 .li span{color:var(--muted);font-size:12px}
 .li.off b{color:var(--muted)}
+.li .eff{display:flex;align-items:center;gap:8px;margin-top:6px;font-style:normal;font-size:11px;color:var(--faint)}
+.li>div:last-child{flex:1;min-width:0}
+.li .eff .bar2{flex:none;width:64px;height:4px;border-radius:4px;background:rgba(255,255,255,.08);position:relative;overflow:hidden}
+.li .eff .bar2 i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,var(--violet),#C9C2FF)}
+.li .eff b{display:inline;font-size:11px;font-family:var(--mono);font-weight:600;color:#C9C2FF}
 .tradebig{display:grid;grid-template-columns:1fr 1fr;border-radius:22px;overflow:hidden}
 .tradebig div{padding:12px 15px;display:flex;flex-direction:column;gap:3px;min-width:0}
 .tradebig div:nth-child(odd){border-right:1px solid var(--edge)}
@@ -233,6 +238,18 @@ button{cursor:pointer}
 .tradebig b{font-family:var(--mono);font-weight:500;font-size:16px;overflow-wrap:anywhere}
 .tradebig .sz b{background:linear-gradient(100deg,#C9C2FF,var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
 .note-s{font-size:11px;color:var(--faint);margin:8px 4px 0;text-align:center}
+.verdict{display:flex;align-items:center;gap:10px;margin-top:12px;padding:9px 12px;border-radius:14px;font-size:12px}
+.verdict b{font-size:10.5px;font-weight:800;letter-spacing:.12em;padding:3px 8px;border-radius:7px;white-space:nowrap}
+.verdict span{color:var(--muted)}
+.verdict span strong{color:var(--text);font-weight:600}
+.verdict.take{background:rgba(43,227,166,.09);border:1px solid rgba(43,227,166,.25)}
+.verdict.take b{background:linear-gradient(100deg,var(--buy),var(--buy-2));color:#052A1F;box-shadow:0 6px 16px -6px var(--buy)}
+.verdict.skip{background:rgba(255,255,255,.03);border:1px dashed var(--edge-hi)}
+.verdict.skip b{background:rgba(255,255,255,.08);color:var(--muted)}
+.vchip{font-size:9px;font-weight:800;letter-spacing:.1em;padding:2px 6px;border-radius:5px}
+.vchip.take{background:rgba(43,227,166,.15);color:var(--buy)}
+.vchip.skip{background:rgba(255,255,255,.06);color:var(--faint)}
+.sigcard.skipped{opacity:.6}
 
 /* page titles */
 .ptitle{font-family:var(--display);font-weight:800;font-size:32px;letter-spacing:-.04em;line-height:1;margin:4px 2px 4px}
@@ -329,13 +346,15 @@ button{cursor:pointer}
 <script>
 (function(){
 'use strict';
-const VERSION='1.0';
+const VERSION='1.2';
 const DEF_CH='fs29u30593w2ks5lfhz3tugxp9yb';
 const TRAITS=['quick','full','into','time','news'];
 
 /* ---------- storage ---------- */
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
-let cfg=Object.assign({db:'',ch:DEF_CH,minQ:4,risk:2,balance:10000,notify:false,newsAll:false},store.get('fs_cfg',{}));
+const _stored=store.get('fs_cfg',{});
+let cfg=Object.assign({db:'',ch:DEF_CH,minQ:0,risk:2,balance:10000,notify:false,newsAll:false,onlyTake:true},_stored);
+if(!('onlyTake' in _stored)) cfg.minQ=0;   // upgrading from 1.0: TAKE/SKIP replaces the old Q4 default
 const saveCfg=()=>store.set('fs_cfg',cfg);
 
 /* ---------- helpers ---------- */
@@ -413,9 +432,10 @@ function checkNewSignals(){
   const fresh=al.filter(a=>(a.t||0)>lastSeenAlert); lastSeenAlert=Math.max(lastSeenAlert,newest);
   for(const a of fresh){
     const x=a.x||{}; const isSig=a.k==='SIGNAL';
-    if(isSig && (x.q==null||x.q>=cfg.minQ)){
+    const g=grade(x.tr,x.q);
+    if(isSig && (x.q==null||x.q>=cfg.minQ) && (!cfg.onlyTake||!g||g.take)){
       const side=x.d<0?'SELL':'BUY';
-      notify(`${a.s} ${side} · Q${x.q}/5`, x.entry!=null?`${x.thru?'Through':'Into'} ${x.d<0?'support':'resistance'} ${fx(x.lvl,x.dg)} · SL ${x.risk}p · room ${x.open?'open':x.room+'R'}`:(a.m||''));
+      notify(`${a.s} ${side} · Q${x.q}/5${g?' · '+(g.take?'TAKE':'SKIP'):''}`, x.entry!=null?`${x.thru?'Through':'Into'} ${x.d<0?'support':'resistance'} ${fx(x.lvl,x.dg)} · SL ${x.risk}p · room ${x.open?'open':x.room+'R'}`:(a.m||''));
     }
   }
 }
@@ -437,6 +457,28 @@ const glyph=(stage,color,d)=>{const len={1:52,2:78,3:100}[stage];const flip=d>0?
   return `<svg class="glyph" viewBox="0 0 56 24" aria-hidden="true"><g${flip}><line x1="2" x2="54" y1="18" y2="18" stroke="var(--faint)" stroke-dasharray="2 3"/><path d="${GLYPH}" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="${GLYPH}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="${len} 100" style="filter:drop-shadow(0 0 3px ${color})"/></g></svg>`;};
 const tick='<svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg>', cross='<svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg>', qmark='<svg viewBox="0 0 12 12"><path d="M6 9v.01M4.3 4.3a1.8 1.8 0 1 1 2.4 1.7c-.5.2-.7.6-.7 1"/></svg>';
 const traitChips=(names,vals)=>names.map((n,i)=>{const v=vals[i];return `<span class="tr ${v===1?'':v===-1?'unk':'no'}"><i></i>${n}</span>`;}).join('');
+
+/* ---------- TAKE / SKIP from the M30 backtest (21 pairs, 22 months, 07-17 UK, 1:1 after costs) ---------- */
+const COMBO={'':[43,60.5],'into':[95,60.0],'quick':[47,61.7],'full':[15,60.0],'time':[13,53.8],'news':[3,33.3],
+  'quick+into':[217,53.0],'quick+full':[41,41.5],'quick+time':[30,66.7],'into+time':[22,59.1],'full+into':[13,53.8],'into+news':[10,40.0],
+  'quick+into+time':[96,37.5],'quick+full+into':[36,41.7],'quick+full+time':[27,40.7]};
+const QLEVEL={0:[0,0],1:[24,37.5],2:[186,39.8],3:[336,52.4],4:[173,59.5],5:[43,60.5]};
+function grade(tr,q){
+  tr=arr(tr);
+  if(tr.length<5) return null;
+  const miss=TRAITS.filter((n,i)=>tr[i]===0), key=miss.join('+');
+  if(q==null) q=5-miss.length;
+  const lullStrong=key==='quick+time'||key==='into+time';
+  const take=q===5||(q===4&&!miss.includes('news'))||(q===3&&lullStrong);
+  const c=COMBO[key]; const useCombo=c&&c[0]>=20; const st=useCombo?c:(QLEVEL[q]||[0,0]);
+  const what=useCombo?(miss.length?`Q${q} missing ${miss.join(' + ')}`:'Q5'):`all Q${q}s`;
+  let why='';
+  if(!take){ if(miss.includes('news')) why='High-impact news due within 2h. Setups like this nearly all lost.';
+    else if(q<=2) why='Q2 and below lost money in testing.';
+    else if(q===3) why='This kind of Q3 was break-even or worse in testing.'; }
+  return {take,label:take?(lullStrong?'TAKE · LULL-STRONG':'TAKE'):'SKIP',win:st[1],n:st[0],what,why,key,q};
+}
+const verdictHTML=g=>g?`<div class="verdict ${g.take?'take':'skip'}"><b>${g.label}</b><span>${g.n?`won <strong>${g.win.toFixed(0)}%</strong> in testing · ${g.n} trades`:''}</span></div>`:'';
 
 /* ---------- per-pair news ---------- */
 function pairNews(p){
@@ -503,11 +545,11 @@ function renderLive(){
   html+=`<div class="label"><span class="lg" style="--c:var(--sell)">Signal</span><em>${sig.length?hm(sig[0].since||now()):''}</em></div>`;
   if(!sig.length) html+=`<div class="empty">No signal on this candle. Signals appear here when a full-body or rejection candle closes into the level.</div>`;
   for(const p of sig){
-    const s=p.sig||{}, side=(s.d??p.d)>0?'buy':'sell', dg=s.dg??p.dg??5, tr=arr(s.tr);
-    html+=`<div class="sigcard ${side}" data-open-pair="${esc(p.s)}" role="button" tabindex="0"><div class="sigtop"><div><div class="pair">${esc(p.s)}</div><span class="side ${side}">${side.toUpperCase()}</span>
+    const s=p.sig||{}, side=(s.d??p.d)>0?'buy':'sell', dg=s.dg??p.dg??5, tr=arr(s.tr), g=grade(tr,s.q);
+    html+=`<div class="sigcard ${side} ${g&&!g.take?'skipped':''}" data-open-pair="${esc(p.s)}" role="button" tabindex="0"><div class="sigtop"><div><div class="pair">${esc(p.s)}</div><span class="side ${side}">${side.toUpperCase()}</span>
       <div class="desc">${s.thru?'Through':'Into'} ${side==='sell'?'support':'resistance'} <span class="mono">${fx(s.lvl??p.lvl,dg)}</span>${s.pct?` · retest <span class="mono">${s.pct}%</span>`:''}</div></div>
       <div class="qring">${qRing(s.q||0,side)}<div class="c">${s.q??'?'}<small>/5</small></div></div></div>
-      <div class="traits">${traitChips(TRAITS,tr)}</div>
+      <div class="traits">${traitChips(TRAITS,tr)}</div>${verdictHTML(g)}
       <div class="trade"><div><span>Entry</span><b>${fx(s.entry,dg)}</b></div><div><span>Stop</span><b>${fx(s.sl,dg)}</b></div><div><span>Risk</span><b>${s.risk??'–'}p</b></div><div><span>Room</span><b>${s.open?'open':(s.room??'–')+'R'}</b></div></div>
       <div class="foot">${newsSpan(p)}${glyph(3,side==='buy'?'var(--buy)':'var(--sell)',p.d)}</div></div>`;
   }
@@ -609,9 +651,11 @@ function alertRow(a,idx,first){
   let badge, title, msg, dim=false, filt='';
   if(isSig){
     badge=`<span class="badge ${side==='buy'?'b-sig-b':'b-sig-s'}">SIGNAL</span>`;
-    title=`${esc(a.s)} ${side} · Q${x.q??'?'}/5`;
+    const g=grade(x.tr,x.q);
+    title=`${esc(a.s)} ${side} · Q${x.q??'?'}/5${g?` <span class="vchip ${g.take?'take':'skip'}">${g.take?'TAKE':'SKIP'}</span>`:''}`;
     msg=x.entry!=null?`${x.thru?'Through':'Into'} ${side==='sell'?'support':'resistance'} <span class="mono">${fx(x.lvl,x.dg)}</span> · SL <span class="mono">${x.risk}p</span> · room <span class="mono">${x.open?'open':x.room+'R'}</span>`:esc(a.m);
     if(x.q!=null&&x.q<cfg.minQ){dim=true;filt=`<span class="filt">Below your Q${cfg.minQ} filter</span>`;}
+    else if(g&&!g.take&&cfg.onlyTake){dim=true;filt=`<span class="filt">SKIP · won ${g.win.toFixed(0)}% in testing</span>`;}
   }else if(k==='LOWER_HIGH'||k==='HIGHER_LOW'){
     badge=`<span class="badge b-lh">${k==='LOWER_HIGH'?'LOWER HIGH':'HIGHER LOW'}</span>`;
     title=esc(a.s);
@@ -653,7 +697,8 @@ function renderSettings(){
   </div>
   <div class="sec">Signals</div>
   <div class="glass list">
-    <div class="field"><label for="minQ">Your minimum quality</label><select id="minQ">${[0,1,2,3,4,5].map(q=>`<option value="${q}" ${cfg.minQ===q?'selected':''}>${q===0?'Show all signals':'Q'+q+' and above'}</option>`).join('')}</select><div class="hint">Signals below this are greyed out and won't notify you.</div></div>
+    <div class="field switch"><span>Only TAKE signals<small>Grey out SKIP signals and only alert you for TAKE ones: Q5, Q4 (unless news is due) and the strong lull Q3s. About 16 a month on 28 pairs, ~60% won in testing.</small></span><button class="tog ${cfg.onlyTake?'on':''}" data-act="onlytake" aria-pressed="${cfg.onlyTake}" aria-label="Only TAKE signals"></button></div>
+    <div class="field"><label for="minQ">Your minimum quality</label><select id="minQ">${[0,1,2,3,4,5].map(q=>`<option value="${q}" ${cfg.minQ===q?'selected':''}>${q===0?'Show all signals':'Q'+q+' and above'}</option>`).join('')}</select><div class="hint">An extra filter on top of TAKE/SKIP. Signals below it are greyed out and won't alert you.</div></div>
   </div>
   <div class="sec">Position size</div>
   <div class="glass list">
@@ -662,18 +707,25 @@ function renderSettings(){
   </div>
   <div class="sec">Notifications</div>
   <div class="glass list">
-    <div class="field switch"><span>Alert me while the app is open<small>New signals at or above your minimum Q. Alerts with the app closed come in a later update.</small></span><button class="tog ${cfg.notify?'on':''}" data-act="notify" aria-pressed="${cfg.notify}" aria-label="Notifications"></button></div>
+    <div class="field switch"><span>Alert me while the app is open<small>New TAKE signals (or all signals if "Only TAKE" is off). Alerts with the app closed come in a later update.</small></span><button class="tog ${cfg.notify?'on':''}" data-act="notify" aria-pressed="${cfg.notify}" aria-label="Notifications"></button></div>
   </div>
   ${deferredInstall?`<div style="margin-top:16px"><button class="btn wide" data-act="install">Install FlipScanner on this phone</button></div>`:''}
   <div class="about">FlipScanner app ${VERSION} · alerts only, never places trades</div>`;
 }
 
 /* --- signal detail --- */
+function detailStat(s,q){
+  const g=grade(s.tr,q);
+  if(!g) return statLine(q);
+  return `<span class="pc">${g.win.toFixed(0)}%</span><span><b style="color:${g.take?'var(--buy)':'var(--muted)'}">${g.label}</b> · ${esc(g.what)} won ${g.win.toFixed(0)}% at 1:1 in testing (${g.n} trades).${g.why?' '+esc(g.why):''}</span>`;
+}
 function statLine(q){
   if(q>=4) return `<span class="pc">60%</span><span>of Q4 and Q5 setups won at 1:1 in the backtest (216 trades)</span>`;
   if(q===3) return `<span class="pc">≈50%</span><span>Q3 setups were around break-even in the backtest</span>`;
   return `<span class="pc">&lt;50%</span><span>Q2 and below lost money in the backtest</span>`;
 }
+// win rate with / without each trait, all M30 signals in the backtest (762 trades)
+const TRAIT_EFFECT={quick:[57,48,224],full:[53,44,606],into:[54,49,232],time:[53,46,545],news:[52,40,704]};
 const EXPLAIN={
   quick:[`Came straight after the retest top.`,`Came a few candles after the retest top, not straight after.`],
   full:[`A full-bodied candle.`,`A rejection candle rather than a full body.`],
@@ -691,17 +743,19 @@ function renderDetail(sym,s,keep){
   let html=`<div class="nav"><button data-act="close"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button><span class="when">${s.t?hm(s.t):''}</span></div>
   <div class="dhero ${side}"><div class="row" style="align-items:center"><div><div class="pair">${esc(sym)}</div><div class="sub"><span class="side ${side}">${side.toUpperCase()}</span>${esc(state().tf||'M30')} · ${s.thru?'through':'into'} ${side==='sell'?'support':'resistance'}</div></div>
     <div class="bigq">${qRing(q,side,6)}<div class="c">${q}<small>/5</small></div></div></div>
-    <div class="stat">${statLine(q)}</div></div>`;
+    <div class="stat">${detailStat(s,q)}</div></div>`;
   if(arr(s.bars).length) html+=`<div class="glass chart"><svg id="chart" viewBox="0 0 320 196" role="img" aria-label="Chart of the setup"></svg></div>`;
   html+=`<div class="sec">Trade <small>${side} stop</small></div><div class="glass tradebig">
     <div><span>Entry</span><b>${fx(s.entry,dg)}</b></div><div><span>Stop</span><b style="color:#FF9DAE">${fx(s.sl,dg)}</b></div>
     <div><span>Risk</span><b>${s.risk??'–'} pips</b></div><div><span>1R target</span><b style="color:#8FF0CC">${target!=null?fx(target,dg):'–'}</b></div>
     <div><span>Room to next level</span><b>${s.open?'open':(s.room??'–')+'R'}</b></div><div class="sz"><span>Size at ${cfg.risk}%</span><b>${lots!=null?lots.toFixed(2)+' lots':'–'}</b></div></div>
     <div class="note-s">${lots!=null?`Based on ${esc(ccy)} ${Number(bal).toLocaleString('en-GB',{maximumFractionDigits:0})} ${h.bal!=null?'from MT5':'set in Settings'}. Always check in MT5 before placing.`:'Lot size needs the updated EA.'}</div>
-    <div class="sec">Quality <small>${q} of 5</small></div><div class="glass list">`;
+    <div class="sec">Quality <small>${q} of 5 · what each adds</small></div><div class="glass list">`;
   TRAITS.forEach((n,i)=>{const v=tr[i];const ok=v===1;const unk=v===-1;
     const txt=unk?'The news calendar was not available. Check news yourself.':EXPLAIN[n][ok?0:1].replace('{c}',cur);
-    html+=`<div class="li ${ok?'':'off'}"><div class="ic ${ok?'ok':unk?'unk':'no'}">${ok?tick:unk?qmark:cross}</div><div><b>${n[0].toUpperCase()+n.slice(1)}${n==='into'?' the level':''}</b><span>${esc(txt)}</span></div></div>`;});
+    const ef=TRAIT_EFFECT[n];
+    const eff=`<em class="eff"><b>+${ef[0]-ef[1]} pts</b><span class="bar2"><i style="width:${ef[0]}%"></i></span>${ef[0]}% won with it · ${ef[1]}% without</em>`;
+    html+=`<div class="li ${ok?'':'off'}"><div class="ic ${ok?'ok':unk?'unk':'no'}">${ok?tick:unk?qmark:cross}</div><div><b>${n[0].toUpperCase()+n.slice(1)}${n==='into'?' the level':''}</b><span>${esc(txt)}</span>${eff}</div></div>`;});
   html+=`</div>`;
   $('#sheetBody').innerHTML=html;
   const sh=$('#sheet'); sh.style.setProperty('--rgb',side==='buy'?'43,227,166':'255,95,126');
@@ -811,6 +865,7 @@ document.addEventListener('click',e=>{
     if(ch.length<24){ toast('Channel name must be at least 24 characters'); return; }
     cfg.db=db; cfg.ch=ch; saveCfg(); connect(); toast(db?'Connecting…':'Showing demo data');
   }
+  else if(act==='onlytake'){ cfg.onlyTake=!cfg.onlyTake; saveCfg(); render(true); }
   else if(act==='demo'){ cfg.db=''; saveCfg(); connect(); toast('Showing demo data'); }
   else if(act==='notify'){
     if(cfg.notify){ cfg.notify=false; saveCfg(); render(true); return; }
@@ -848,6 +903,7 @@ function makeDemo(){
     {t:c0,k:'SIGNAL',s:'GBPJPY',x:sig},{t:c0-1800,k:'LOWER_HIGH',s:'GBPJPY',x:{d:-1,lvl:192.5,pct:72,maxq:5,tt:1,tn:1}},
     {t:c0-3600,k:'LOWER_HIGH',s:'AUDUSD',x:{d:-1,lvl:0.70227,pct:90,maxq:4,tt:1,tn:0}},{t:c0-7200,k:'HIGHER_LOW',s:'EURNZD',x:{d:1,lvl:1.98162,pct:74,maxq:4,tt:0,tn:1}},
     {t:c0-9000,k:'ENDED',s:'USDCAD',x:{why:'CANCELLED',note:'Price went back above the retest top'}},
+    {t:c0-14400,k:'SIGNAL',s:'CADJPY',x:{d:-1,lvl:108.214,entry:108.181,sl:108.402,risk:22.1,room:2.6,q:3,tr:[0,1,1,0,1],thru:false,pct:78,dg:3}},
     {t:c0-16200,k:'SIGNAL',s:'EURUSD',x:{d:1,lvl:1.08415,entry:1.08452,sl:1.08328,risk:12.4,room:1.6,q:3,tr:[1,0,0,1,1],thru:true,dg:5}},
     {t:c0-23400,k:'HIGHER_LOW',s:'EURUSD',x:{d:1,lvl:1.08415,pct:81,maxq:5,tt:1,tn:1}}];
   // the week: Monday to Friday of this (or next) week, in UK time
