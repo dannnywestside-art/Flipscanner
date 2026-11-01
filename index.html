@@ -118,7 +118,7 @@ button{cursor:pointer}
              linear-gradient(150deg,rgba(var(--rgb),.85),rgba(var(--rgb2),.35) 40%,rgba(255,255,255,.06) 75%) border-box;
   border:1px solid transparent;box-shadow:0 24px 50px -24px rgba(var(--rgb),.55)}
 .sigcard+.sigcard{margin-top:12px}
-.sigcard::after{content:"";position:absolute;z-index:-1;top:-30px;right:-30px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(var(--rgb),.35),transparent 70%);filter:blur(10px)}
+.sigcard::after{content:"";pointer-events:none;position:absolute;z-index:-1;top:-30px;right:-30px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(var(--rgb),.35),transparent 70%);filter:blur(10px)}
 .sigcard.sell,.dhero.sell{--rgb:255,95,126;--rgb2:255,155,99}
 .sigcard.buy,.dhero.buy{--rgb:43,227,166;--rgb2:85,200,255}
 .sigtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
@@ -196,7 +196,7 @@ button{cursor:pointer}
 .dhero{padding:18px 18px 16px;border-radius:26px;position:relative;overflow:hidden;isolation:isolate;
   background:linear-gradient(165deg,rgba(var(--rgb),.22),rgba(var(--rgb2),.05) 50%,rgba(255,255,255,.02)) padding-box,
              linear-gradient(150deg,rgba(var(--rgb),.8),rgba(255,255,255,.06) 60%) border-box;border:1px solid transparent}
-.dhero::after{content:"";position:absolute;z-index:-1;left:-40px;bottom:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(var(--rgb),.28),transparent 70%)}
+.dhero::after{content:"";pointer-events:none;position:absolute;z-index:-1;left:-40px;bottom:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(var(--rgb),.28),transparent 70%)}
 .dhero .pair{font-size:36px}
 .dhero .sub{font-size:12.5px;color:var(--muted);margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .dhero .side{margin:0}
@@ -332,6 +332,31 @@ button{cursor:pointer}
 .status-line.ok{color:#9DF2D3}
 .status-line.bad{color:#FFB1BF}
 .about{font-size:11.5px;color:var(--faint);text-align:center;margin-top:20px}
+.infob{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:var(--sans);font-size:11.5px;font-weight:600;color:#C9C2FF;padding:5px 10px;border-radius:99px;background:rgba(142,125,255,.12);border:1px solid rgba(142,125,255,.3);letter-spacing:0}
+.infob svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.info h2{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.04em;line-height:1.05;margin:2px 2px 6px}
+.info .lead{color:var(--muted);font-size:13px;margin:0 2px 6px}
+.info p{font-size:13px;color:#D3D6E2;margin:0;line-height:1.5}
+.info .pad{padding:14px 15px}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;text-align:right;padding:10px 12px 8px;border-bottom:1px solid var(--edge)}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl td{padding:10px 12px;border-top:1px solid var(--edge);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.tbl tr:first-child td{border-top:0}
+.tbl td:first-child{font-family:var(--sans);font-weight:500}
+.tbl td small{display:block;font-family:var(--sans);font-size:11px;color:var(--faint);font-weight:400;margin-top:1px}
+.tbl .pos{color:#8FF0CC}
+.tbl .neg{color:#FF9DAE}
+.tbl tr.hi td{background:rgba(43,227,166,.07)}
+.tbl tr.lo td{opacity:.6}
+.wbar{display:inline-block;width:48px;height:5px;border-radius:5px;background:rgba(255,255,255,.08);position:relative;vertical-align:middle;margin-right:7px;overflow:hidden}
+.wbar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:linear-gradient(90deg,var(--violet),#C9C2FF)}
+.stage{display:flex;gap:12px;padding:12px 15px;align-items:flex-start}
+.stage+.stage{border-top:1px solid var(--edge)}
+.stage i{width:10px;height:10px;border-radius:50%;margin-top:5px;flex:none;box-shadow:0 0 10px currentColor;background:currentColor}
+.stage b{display:block;font-size:13px;font-weight:600}
+.stage span{color:var(--muted);font-size:12px}
+.fine{font-size:11.5px;color:var(--faint);margin:14px 4px 0;line-height:1.5}
 .toast{position:fixed;z-index:9;left:50%;transform:translate(-50%,20px);bottom:calc(var(--safe-b) + 92px);padding:10px 16px;border-radius:14px;background:rgba(30,32,44,.92);border:1px solid var(--edge-hi);font-size:12.5px;opacity:0;transition:.25s;pointer-events:none;backdrop-filter:blur(12px)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 </style>
@@ -346,7 +371,7 @@ button{cursor:pointer}
 <script>
 (function(){
 'use strict';
-const VERSION='1.2';
+const VERSION='1.3';
 const DEF_CH='fs29u30593w2ks5lfhz3tugxp9yb';
 const TRAITS=['quick','full','into','time','news'];
 
@@ -542,7 +567,7 @@ function renderLive(){
     <div class="spread"><div class="barline">${sig.length?`<i style="flex:${sig.length};background:linear-gradient(90deg,var(--sell),var(--sell-2));box-shadow:0 0 10px var(--sell)"></i>`:''}${aw.length?`<i style="flex:${aw.length};background:var(--await)"></i>`:''}${fm.length?`<i style="flex:${fm.length};background:var(--form);opacity:.8"></i>`:''}<i style="flex:${Math.max(scan.length,total*0.02)};background:rgba(255,255,255,.1)"></i></div>
     <div class="keys"><span><b>${sig.length}</b>signal</span><span><b>${aw.length}</b>awaiting</span><span><b>${fm.length}</b>forming</span><span><b>${scan.length}</b>scanning</span></div></div>`;
 
-  html+=`<div class="label"><span class="lg" style="--c:var(--sell)">Signal</span><em>${sig.length?hm(sig[0].since||now()):''}</em></div>`;
+  html+=`<div class="label"><span class="lg" style="--c:var(--sell)">Signal</span><button class="infob" data-act="info">${INFO_ICON}How scores work</button></div>`;
   if(!sig.length) html+=`<div class="empty">No signal on this candle. Signals appear here when a full-body or rejection candle closes into the level.</div>`;
   for(const p of sig){
     const s=p.sig||{}, side=(s.d??p.d)>0?'buy':'sell', dg=s.dg??p.dg??5, tr=arr(s.tr), g=grade(tr,s.q);
@@ -709,6 +734,8 @@ function renderSettings(){
   <div class="glass list">
     <div class="field switch"><span>Alert me while the app is open<small>New TAKE signals (or all signals if "Only TAKE" is off). Alerts with the app closed come in a later update.</small></span><button class="tog ${cfg.notify?'on':''}" data-act="notify" aria-pressed="${cfg.notify}" aria-label="Notifications"></button></div>
   </div>
+  <div class="sec">Help</div>
+  <div class="glass list"><div class="field switch"><span>How the scores work<small>Stages, the five traits, how the win rate adds up, and TAKE or SKIP.</small></span><button class="btn ghost" data-act="info">Open</button></div></div>
   ${deferredInstall?`<div style="margin-top:16px"><button class="btn wide" data-act="install">Install FlipScanner on this phone</button></div>`:''}
   <div class="about">FlipScanner app ${VERSION} · alerts only, never places trades</div>`;
 }
@@ -750,7 +777,7 @@ function renderDetail(sym,s,keep){
     <div><span>Risk</span><b>${s.risk??'–'} pips</b></div><div><span>1R target</span><b style="color:#8FF0CC">${target!=null?fx(target,dg):'–'}</b></div>
     <div><span>Room to next level</span><b>${s.open?'open':(s.room??'–')+'R'}</b></div><div class="sz"><span>Size at ${cfg.risk}%</span><b>${lots!=null?lots.toFixed(2)+' lots':'–'}</b></div></div>
     <div class="note-s">${lots!=null?`Based on ${esc(ccy)} ${Number(bal).toLocaleString('en-GB',{maximumFractionDigits:0})} ${h.bal!=null?'from MT5':'set in Settings'}. Always check in MT5 before placing.`:'Lot size needs the updated EA.'}</div>
-    <div class="sec">Quality <small>${q} of 5 · what each adds</small></div><div class="glass list">`;
+    <div class="sec">Quality <button class="infob" data-act="info">${INFO_ICON}How scores work</button></div><div class="glass list">`;
   TRAITS.forEach((n,i)=>{const v=tr[i];const ok=v===1;const unk=v===-1;
     const txt=unk?'The news calendar was not available. Check news yourself.':EXPLAIN[n][ok?0:1].replace('{c}',cur);
     const ef=TRAIT_EFFECT[n];
@@ -803,6 +830,65 @@ function drawChart(svg,s,target){
   el('text',{x:sx-12,y:B+10,fill:sc}).textContent=hm(bars[n-1][0]+(TF_MIN[state().tf||'M30']||30)*60);
 }
 
+/* ---------- info page: how the scores work ---------- */
+const INFO_ICON='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>';
+function infoHTML(){
+  const pct=(w)=>`<span class="wbar"><i style="width:${w}%"></i></span>${w.toFixed(w%1?1:0)}%`;
+  const ladder=[['All signals','Every signal candle the scanner finds',46,50.9,0.020],['+ News','Nothing high-impact due within 2 hours',43,51.8,0.034],['+ Time','Not in the 10:00–13:00 lull',31,54.2,0.090],['+ Full','Full-bodied signal candle',24,56.5,0.125],['+ Quick','Straight after the retest top',8.4,60.1,0.167],['+ Into','Closes at the level, not through it',2.6,60.5,0.244]];
+  const qs=[[5,43,2.6,60.5,0.244],[4,173,10.5,59.5,0.161],[3,336,20.4,52.4,0.062],[2,186,11.3,39.8,-0.212],[1,24,1.5,37.5,-0.190]];
+  const takes=[['Q5','Nothing missing',43,60.5,1],['Q4','Missing quick',47,61.7,1],['Q4','Missing into',95,60.0,1],['Q4','Missing full or time',28,57,1],['Q3 · lull-strong','Missing quick + time',30,66.7,1],['Q3 · lull-strong','Missing into + time',22,59.1,1],
+    ['Q3','Missing quick + into',217,53.0,0],['Q3','Missing quick + full',41,41.5,0],['Q4 / Q3','News due within 2h',16,31,0],['Q2 / Q1','Three or more missing',210,39.5,0]];
+  const R=v=>`<span class="${v>=0?'pos':'neg'}">${v>=0?'+':''}${v.toFixed(2)}</span>`;
+  return `<div class="nav"><button data-act="close"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button><span class="when">Backtest · M30</span></div>
+  <div class="info">
+  <h2>How the scores work</h2>
+  <p class="lead">Every signal gets a quality score from 0 to 5, one point for each trait the backtest winners had in common. The more it has, the more often it worked.</p>
+
+  <div class="sec">The stages</div>
+  <div class="glass list">
+    <div class="stage" style="color:var(--form)"><i></i><div><b style="color:var(--text)">Forming</b><span>Price dropped to a level and is bouncing back. The retest needs to reach 70–95% of the way to the last high and then turn.</span></div></div>
+    <div class="stage" style="color:var(--await)"><i></i><div><b style="color:var(--text)">Awaiting signal</b><span>The lower high (or higher low) is in. The scanner watches the next 10 candles for a signal candle.</span></div></div>
+    <div class="stage" style="color:var(--sell)"><i></i><div><b style="color:var(--text)">Signal</b><span>A full-bodied or rejection candle closed into or through the level with at least 1R of room. It gets its Q score and a TAKE or SKIP.</span></div></div>
+    <div class="stage" style="color:var(--faint)"><i></i><div><b style="color:var(--text)">Ended</b><span>Price went back past the retest top, no signal came within 10 candles, or support was in the way.</span></div></div>
+  </div>
+
+  <div class="sec">The five traits <small>won with · without</small></div>
+  <div class="glass"><table class="tbl"><thead><tr><th>Trait</th><th>With</th><th>Without</th><th>Adds</th></tr></thead><tbody>
+    <tr><td>News<small>Nothing high-impact for either currency in the next 2h</small></td><td>52%</td><td>40%</td><td class="pos">+12</td></tr>
+    <tr><td>Quick<small>Signal candle straight after the retest top</small></td><td>57%</td><td>48%</td><td class="pos">+9</td></tr>
+    <tr><td>Full<small>Body at least 60% of the candle</small></td><td>53%</td><td>44%</td><td class="pos">+9</td></tr>
+    <tr><td>Time<small>Not opening between 10:00 and 13:00 UK</small></td><td>53%</td><td>46%</td><td class="pos">+7</td></tr>
+    <tr><td>Into<small>Closes at the level, not already through it</small></td><td>54%</td><td>49%</td><td class="pos">+5</td></tr>
+  </tbody></table></div>
+
+  <div class="sec">How it adds up <small>per month on 28 pairs</small></div>
+  <div class="glass"><table class="tbl"><thead><tr><th>Filter</th><th>Per mo</th><th>Won</th><th>Avg R</th></tr></thead><tbody>
+    ${ladder.map((r,i)=>`<tr class="${i===ladder.length-1?'hi':''}"><td>${r[0]}<small>${r[1]}</small></td><td>${r[2]}</td><td>${pct(r[3])}</td><td>${R(i===0?-0.020:r[4])}</td></tr>`).join('')}
+  </tbody></table></div>
+  <p class="fine">Each row keeps only the signals that also pass the new trait. The win rate climbs from 51% to about 60% while the number of trades falls, which is why Q4 is the sweet spot: almost the same win rate as Q5 with four times the trades. Avg R is per trade with the lock-1R-and-trail exit.</p>
+
+  <div class="sec">By Q score</div>
+  <div class="glass"><table class="tbl"><thead><tr><th>Score</th><th>Per mo</th><th>Won</th><th>Avg R</th></tr></thead><tbody>
+    ${qs.map(r=>`<tr class="${r[0]>=4?'hi':r[0]<=2?'lo':''}"><td>Q${r[0]}<small>${r[1]} trades in testing</small></td><td>${r[2]}</td><td>${pct(r[3])}</td><td>${R(r[4])}</td></tr>`).join('')}
+  </tbody></table></div>
+
+  <div class="sec">TAKE or SKIP <small>by what's missing</small></div>
+  <div class="glass"><table class="tbl"><thead><tr><th>Signal</th><th>Trades</th><th>Won</th><th></th></tr></thead><tbody>
+    ${takes.map(r=>`<tr class="${r[4]?'hi':'lo'}"><td>${r[0]}<small>${r[1]}</small></td><td>${r[2]}</td><td>${pct(r[3])}</td><td><span class="vchip ${r[4]?'take':'skip'}">${r[4]?'TAKE':'SKIP'}</span></td></tr>`).join('')}
+  </tbody></table></div>
+  <div class="glass pad" style="margin-top:10px"><p><b>TAKE</b> = Q5, any Q4 unless news is due, and Q3s where only the time and one candle trait are missing (a strong candle in the lull). About 16 a month on 28 pairs, roughly 60% won.</p></div>
+
+  <p class="fine">From the M30 backtest: 21 pairs, 22 months, 07:00–17:00 UK, after commission and spread. "Won" means price reached 1R before the stop. Small groups (under about 30 trades) can swing a lot, and past results don't guarantee future ones. Always check the chart yourself before trading.</p>
+  </div>`;
+}
+function showInfo(){
+  openDetail={info:true};
+  const sh=$('#sheet'); sh.style.setProperty('--rgb','142,125,255');
+  $('#sheetBody').innerHTML=infoHTML(); $('#sheetBody').scrollTop=0;
+  sh.classList.add('open'); sh.setAttribute('aria-hidden','false');
+  if(location.hash!=='#info') history.pushState({d:1},'','#info');
+}
+
 /* ---------- render ---------- */
 const ICONS=[['live','Live','<path d="M3 12h4l3-8 4 16 3-8h4"/>'],['news','News','<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/>'],['alerts','Alerts','<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>'],['settings','Settings','<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>']];
 let seenAlertsT=store.get('fs_seen',0);
@@ -833,6 +919,7 @@ function tickNow(){
 let openDetail=null;
 function detailData(){
   if(!openDetail) return null;
+  if(openDetail.info) return null;
   if(openDetail.alert!=null){ const a=arr(state().alerts)[openDetail.alert]; return a&&a.x; }
   const p=pairs().find(x=>x.s===openDetail.sym); return p&&p.sig ? p.sig : openDetail.last;
 }
@@ -843,9 +930,9 @@ function showDetail(sym,alertIdx){
 }
 function closeDetail(fromPop){
   openDetail=null; const sh=$('#sheet'); sh.classList.remove('open'); sh.setAttribute('aria-hidden','true');
-  if(!fromPop&&location.hash==='#signal') history.back();
+  if(!fromPop&&(location.hash==='#signal'||location.hash==='#info')) history.back();
 }
-window.addEventListener('popstate',()=>{ if(location.hash!=='#signal'&&openDetail) closeDetail(true); else syncTab(); });
+window.addEventListener('popstate',()=>{ if(openDetail&&location.hash!=='#signal'&&location.hash!=='#info') closeDetail(true); else syncTab(); });
 function syncTab(){ const h=location.hash.replace('#',''); if(['live','news','alerts','settings'].includes(h)&&h!==tab){tab=h;render();} }
 
 /* ---------- events ---------- */
@@ -859,6 +946,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.openAlert!=null){ const a=arr(state().alerts)[+b.dataset.openAlert]; if(a) showDetail(a.s,+b.dataset.openAlert); return; }
   const act=b.dataset.act;
   if(act==='close') closeDetail(false);
+  else if(act==='info') showInfo();
   else if(act==='connect'){
     const db=$('#dbUrl').value.trim(), ch=$('#chan').value.trim();
     if(db&&!/^https:\/\/[^\s/]+\.(firebaseio\.com|firebasedatabase\.app)\/?$/i.test(db)){ toast('That doesn’t look like a Firebase database URL'); return; }
