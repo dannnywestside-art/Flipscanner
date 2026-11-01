@@ -371,16 +371,19 @@ button{cursor:pointer}
 <script>
 (function(){
 'use strict';
-const VERSION='1.3';
+const VERSION='1.4';
 const DEF_CH='fs29u30593w2ks5lfhz3tugxp9yb';
 const TRAITS=['quick','full','into','time','news'];
 
 /* ---------- storage ---------- */
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+const NATIVE=!!window.FlipNative;   // running inside the Android app
 const _stored=store.get('fs_cfg',{});
-let cfg=Object.assign({db:'',ch:DEF_CH,minQ:0,risk:2,balance:10000,notify:false,newsAll:false,onlyTake:true},_stored);
+let cfg=Object.assign({db:'',ch:DEF_CH,minQ:0,risk:2,balance:10000,notify:false,newsAll:false,onlyTake:true,setupAlerts:false},_stored);
 if(!('onlyTake' in _stored)) cfg.minQ=0;   // upgrading from 1.0: TAKE/SKIP replaces the old Q4 default
-const saveCfg=()=>store.set('fs_cfg',cfg);
+const saveCfg=()=>{ store.set('fs_cfg',cfg); syncNative(); };
+function syncNative(){ if(!NATIVE) return; try{ window.FlipNative.setConfig(cfg.db||'',cfg.ch||'',!!cfg.onlyTake,cfg.minQ|0,!!cfg.setupAlerts); }catch(e){} }
+function nativeAlertsOn(){ try{ return !!window.FlipNative.alertsOn(); }catch(e){ return false; } }
 
 /* ---------- helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -428,6 +431,7 @@ function applyPatch(path,obj){
   for(const k in obj) data=setPath(data,segs.concat(k.split('/').filter(Boolean)),obj[k]);
 }
 function connect(){
+  syncNative();
   if(es){ es.close(); es=null; }
   if(!cfg.db){ mode='demo'; conn='idle'; data=makeDemo(); render(); return; }
   mode='live'; conn='connecting'; data={}; lastSeenAlert=null; render();
@@ -467,7 +471,7 @@ function checkNewSignals(){
 function notify(title,body){
   toast(title);
   if(navigator.vibrate) try{navigator.vibrate([60,40,60]);}catch(e){}
-  if(!cfg.notify||!('Notification' in window)||Notification.permission!=='granted') return;
+  if(NATIVE||!cfg.notify||!('Notification' in window)||Notification.permission!=='granted') return;   // the Android app posts its own
   if(navigator.serviceWorker&&navigator.serviceWorker.ready){
     navigator.serviceWorker.ready.then(r=>r.showNotification(title,{body,icon:'icon-192.png',badge:'icon-192.png',tag:'fs-'+title,data:{url:'./#alerts'}})).catch(()=>{});
   }
@@ -731,9 +735,12 @@ function renderSettings(){
     <div class="field"><label for="bal">Account balance</label><input id="bal" type="number" inputmode="decimal" min="0" step="100" value="${esc(cfg.balance)}"><div class="hint">${balNote}</div></div>
   </div>
   <div class="sec">Notifications</div>
-  <div class="glass list">
+  ${NATIVE?`<div class="glass list">
+    <div class="field switch"><span>Background alerts<small>Notifies you of new ${cfg.onlyTake?'TAKE ':''}signals even when the app is closed, and warns you if the laptop goes offline. Android shows a small "Watching for signals" notification while it's on.</small></span><button class="tog ${nativeAlertsOn()?'on':''}" data-act="nalerts" aria-pressed="${nativeAlertsOn()}" aria-label="Background alerts"></button></div>
+    <div class="field switch"><span>Also alert me for new setups<small>A quieter alert when a lower high or higher low forms, before the signal candle.</small></span><button class="tog ${cfg.setupAlerts?'on':''}" data-act="setups" aria-pressed="${!!cfg.setupAlerts}" aria-label="Setup alerts"></button></div>
+  </div>`:`<div class="glass list">
     <div class="field switch"><span>Alert me while the app is open<small>New TAKE signals (or all signals if "Only TAKE" is off). Alerts with the app closed come in a later update.</small></span><button class="tog ${cfg.notify?'on':''}" data-act="notify" aria-pressed="${cfg.notify}" aria-label="Notifications"></button></div>
-  </div>
+  </div>`}
   <div class="sec">Help</div>
   <div class="glass list"><div class="field switch"><span>How the scores work<small>Stages, the five traits, how the win rate adds up, and TAKE or SKIP.</small></span><button class="btn ghost" data-act="info">Open</button></div></div>
   ${deferredInstall?`<div style="margin-top:16px"><button class="btn wide" data-act="install">Install FlipScanner on this phone</button></div>`:''}
@@ -953,6 +960,8 @@ document.addEventListener('click',e=>{
     if(ch.length<24){ toast('Channel name must be at least 24 characters'); return; }
     cfg.db=db; cfg.ch=ch; saveCfg(); connect(); toast(db?'Connecting…':'Showing demo data');
   }
+  else if(act==='nalerts'){ const on=!nativeAlertsOn(); syncNative(); try{ window.FlipNative.setAlerts(on); }catch(e){} toast(on?'Background alerts on':'Background alerts off'); setTimeout(()=>render(true),600); }
+  else if(act==='setups'){ cfg.setupAlerts=!cfg.setupAlerts; saveCfg(); render(true); }
   else if(act==='onlytake'){ cfg.onlyTake=!cfg.onlyTake; saveCfg(); render(true); }
   else if(act==='demo'){ cfg.db=''; saveCfg(); connect(); toast('Showing demo data'); }
   else if(act==='notify'){
