@@ -1,5 +1,5 @@
 // FlipScanner service worker: keeps the app shell available offline and opens the app from notifications.
-const CACHE = 'flipscanner-v1';
+const CACHE = 'flipscanner-v2-levels';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './maskable-512.png'];
 
 self.addEventListener('install', e => {

@@ -1,7 +1,7 @@
 {
   "name": "FlipScanner",
   "short_name": "FlipScanner",
-  "description": "Live setups and signals from your FlipScanner EA",
+  "description": "Your levels, alerts and news from the LevelWatch EA",
   "id": "./",
   "start_url": "./#live",
   "scope": "./",
